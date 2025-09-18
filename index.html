@@ -75,14 +75,43 @@
       pointer-events: none;
     }
 
-    #username-input {
+    #profile-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
+    }
+
+    #profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #7f00ff;
+    }
+
+    #username-input {
+      flex: 1;
       padding: 10px;
       background: rgba(0,0,0,0.6);
       color: #00ffff;
       border: 1px solid #7f00ff;
-      width: 100%;
       box-sizing: border-box;
+    }
+
+    #upload-btn {
+      cursor: pointer;
+    }
+
+    #upload-btn img {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid #7f00ff;
+    }
+
+    input[type="file"] {
+      display: none;
     }
 
     #messages {
@@ -96,6 +125,9 @@
     }
 
     .message {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin: 8px 0;
       padding: 10px 14px;
       max-width: 80%;
@@ -106,6 +138,12 @@
       font-size: 14px;
       animation: fadeInUp 0.3s ease;
       backdrop-filter: blur(2px);
+    }
+
+    .typing-indicator {
+      font-style: italic;
+      opacity: 0.7;
+      margin: 4px 0;
     }
 
     @media screen and (max-width: 600px) {
@@ -181,42 +219,6 @@
     #send-btn {
       cursor: pointer;
     }
-
-    @media (max-width: 768px) {
-      #chat-box {
-        width: 95vw;
-        height: 75vh;
-        padding: 15px;
-      }
-
-      #chat-icon {
-        font-size: 14px;
-        padding: 8px 16px;
-      }
-
-      input[type="text"], button {
-        padding: 8px;
-        font-size: 14px;
-      }
-
-      .message {
-        font-size: 13px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      #chat-box {
-        height: 80vh;
-      }
-
-      #messages {
-        font-size: 12px;
-      }
-
-      #username-input {
-        font-size: 14px;
-      }
-    }
   </style>
 </head>
 <body>
@@ -227,8 +229,18 @@
 
 <div id="chat-box">
   <img id="bg-chat" src="Background/bg-chat.jpg" alt="Background Chat Box">
-  <input type="text" id="username-input" placeholder="Masukkan username">
+
+  <div id="profile-area">
+    <img id="profile-pic" src="profile/default.png" alt="Profil">
+    <input type="text" id="username-input" placeholder="Masukkan username">
+    <label id="upload-btn" for="upload-input">
+      <img src="Background/photo_profil.jpg" alt="Upload Icon">
+    </label>
+    <input type="file" id="upload-input" accept="image/*">
+  </div>
+
   <div id="messages"></div>
+
   <div id="input-area">
     <input type="text" id="message-input" placeholder="Ketik pesan...">
     <button id="send-btn">📩 Kirim</button>
@@ -248,25 +260,77 @@
   const messagesDiv = document.getElementById("messages");
   const sendSound = document.getElementById("send-sound");
   const clickSound = document.getElementById("click-sound");
+  const profilePic = document.getElementById("profile-pic");
+  const uploadInput = document.getElementById("upload-input");
+
+  let profileImageSrc = profilePic.src;
 
   chatIcon.addEventListener("click", () => {
     chatBox.classList.toggle("active");
-    clickSound.play(); // 🔊 Suara klik tombol chat
+    clickSound.play();
   });
 
-  function sendMessage() {
-    const text = messageInput.value.trim();
-    const user = usernameInput.value.trim();
-    if (text && user) {
-      const div = document.createElement("div");
-      div.className = "message";
-      div.textContent = `${user}: ${text}`;
-      messagesDiv.appendChild(div);
-      messageInput.value = "";
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      sendSound.play(); // 🔊 Suara kirim pesan
+  uploadInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        profileImageSrc = evt.target.result;
+        profilePic.src = profileImageSrc;
+      };
+      reader.readAsDataURL(file);
     }
+  });
+
+  messageInput.addEventListener("input", () => {
+    const user = usernameInput.value.trim() || "User";
+    showTypingIndicator(`${user} sedang mengetik...`);
+  });
+
+  function showTypingIndicator(text) {
+    removeTypingIndicator();
+    const typing = document.createElement("div");
+    typing.className = "typing-indicator";
+    typing.id = "typing";
+    typing.textContent = text;
+    messagesDiv.appendChild(typing);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
+
+  function removeTypingIndicator() {
+    const typing = document.getElementById("typing");
+    if (typing) typing.remove();
+  }
+
+ function sendMessage() {
+  const text = messageInput.value.trim();
+  const user = usernameInput.value.trim();
+  if (text && user) {
+    const div = document.createElement("div");
+    div.className = "message";
+
+    const img = document.createElement("img");
+    img.src = profileImageSrc;
+    img.alt = "Profil";
+    img.style.width = "32px";
+    img.style.height = "32px";
+    img.style.borderRadius = "50%";
+    img.style.objectFit = "cover";
+    img.style.border = "1px solid #7f00ff";
+
+    const span = document.createElement("span");
+    span.className = "message-text";
+    span.textContent = `${user}: ${text}`;
+
+    div.appendChild(img);
+    div.appendChild(span);
+    messagesDiv.appendChild(div);
+    messageInput.value = "";
+    removeTypingIndicator();
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    sendSound.play();
+  }
+}
 
   sendBtn.addEventListener("click", sendMessage);
 
@@ -278,5 +342,4 @@
 </script>
 
 </body>
-
 </html>
