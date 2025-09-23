@@ -3,154 +3,401 @@
 <head>
   <meta charset="UTF-8">
   <title>ChatL</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      color: #00ffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
+/* === MODAL PREVIEW IMAGE === */
+#image-modal {
+  display: none;
+  backdrop-filter: blur(8px);
+}
+.image-item {
+  position: relative;
+  border: 2px solid #7f00ff;
+  background: linear-gradient(135deg, rgba(0,255,255,0.10), rgba(127,0,255,0.18));
+  padding: 10px 10x 16px 10px;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px #7f00ff44, 0 0 24px #00ffff22;
+  transition: transform 0.18s, box-shadow 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 9999;
+}
+.image-item:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 32px #00ffff88, 0 0 32px #7f00ff88;
+  z-index: 2;
+}
+#modal-content {
+  border-radius: 18px;
+  justify-content: center;
+  overflow: hidden;
+  position: center;
+}
+.image-item img {
+  width: auto;
+  height: auto;
+  object-fit: fill;
+  border-radius: 14px;
+  border: 4px solid #000000;
+  box-shadow: 0 4px 24px #7f00ff88, 0 0 0 4px #222 inset, 0 0 18px #00ffff88;
+  background: linear-gradient(135deg, #222 60%, #7f00ff22 100%);
+  padding: 0;
+  display: block;
+}
+.image-item span {
+  display: block;
+  font-size: 14px;
+  margin-top: auto;
+  text-align: center;
+  opacity: 0.95;
+  color: #00ffff;
+  font-weight: bold;
+  text-shadow: 0 0 8px #7f00ff;
+  letter-spacing: 1px;
+  align-items: center;
+}
+#add-image-btn {
+  background: #222;
+  color: #f5f5f5;
+  border: 2px solid #7f00ff;
+  border-radius: 4px;
+  padding: 4px 12px 4px 8px;
+  font-size: 0.85em;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.15s, box-shadow 0.15s;
+  outline: none;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+}
+#add-image-btn:hover {
+  background: #333;
+  color: #7f00ff;
+  transform: scale(1.03);
+}
+#modal-img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 0 18px #00ffff88;
+  border: 2px solid #7f00ff;
+  display: block;
+  margin: auto;
+  transition: all 0.4s cubic-bezier(.68,-0.55,.27,1.55);
+  width: 180px;
+  height: 180px;
+  border-radius: 12px;
+  box-shadow: 0 0 32px #00ffff88;
+  border: 3px solid #7f00ff;
+  margin: auto;
+  transform: scale(1.15);
+}
+#modal-name {
+  color: #00ffff;
+  font-size: 1.3em;
+  margin-top: 18px;
+  text-shadow: 0 0 8px #7f00ff;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+#close-modal {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+  background: #7f00ff;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5em;
+  cursor: pointer;
+  box-shadow: 0 0 8px #00ffff88;
+  transition: background 0.2s;
+}
+#close-modal:hover {
+  background: #00ffff;
+  color: #7f00ff;
+}
+    /* === GLOBAL === */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #0a0a0a;
+  color: #00ffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
 
-    #bg-page {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      z-index: -2;
-      pointer-events: none;
-    }
+#bg-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -2;
+  pointer-events: none;
+}
 
-    #chat-icon {
-      background-color: #1a1f2e;
-      color: #00ffff;
-      border: 2px solid #7f00ff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 20px;
-      z-index: 1;
-    }
+/* === BUTTONS === */
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  z-index: 2;
+}
 
-    #chat-box {
-      display: flex;
-      flex-direction: column;
-      width: 80vw;
-      max-width: 600px;
-      height: 70vh;
-      border: 2px solid #7f00ff;
-      padding: 20px;
-      box-sizing: border-box;
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-      opacity: 0;
-      transform: scale(0.95);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      pointer-events: none;
-    }
+#chat-icon, #gallery-icon {
+  background-color: #ffffff;
+  color: #00ffff;
+  border: 2px solid #7f00ff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  box-shadow: 0 0 6px rgba(127, 0, 255, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-    #chat-box.active {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: auto;
-    }
+#chat-icon:hover, #gallery-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(127, 0, 255, 0.8);
+}
 
-    #bg-chat {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -1;
-      pointer-events: none;
-    }
+/* === CHAT & GALLERY BOX === */
+#chat-box, #gallery-box {
+  display: none;
+  flex-direction: column;
+  width: 90vw;
+  max-width: 800px;
+  height: 75vh;
+  border: 3px solid #cb00ef;
+  padding: 20px;
+  background: rgba(71, 67, 67, 0.153);
+  box-sizing: border-box;
+  overflow-y: auto;
+  color: #ffffff00;
+  z-index: 1;
+  position: relative;
+  backdrop-filter: blur(4px);
+}
 
-    #profile-area {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+#chat-box.active, #gallery-box.active {
+  display: flex;
+}
 
-    #profile-pic {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #7f00ff;
-    }
+#bg-chat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+}
 
-    #username-input {
-      flex: 1;
-      padding: 10px;
-      background: rgba(0,0,0,0.6);
-      color: #00ffff;
-      border: 1px solid #7f00ff;
-      box-sizing: border-box;
-    }
+/* === PROFILE AREA === */
+#profile-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
 
-    #upload-btn {
-      cursor: pointer;
-    }
+#profile-pic {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #7f00ff;
+}
 
-    #upload-btn img {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
-      border: 1px solid #7f00ff;
-    }
+#username-input {
+  flex: 1;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #000000;
+  border: 1px solid #7f00ff;
+  font-size: 14px;
+}
 
-    input[type="file"] {
-      display: none;
-    }
+#upload-btn img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #7f00ff;
+}
 
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      background: rgba(0,0,0,0.4);
-      padding: 10px;
-      border: 1px solid #7f00ff;
-      color: #00ffff;
-    }
+input[type="file"] {
+  display: none;
+}
 
-    .message {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 8px 0;
-      padding: 10px 14px;
-      max-width: 80%;
-      background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(127,0,255,0.2));
-      border: 1px solid #7f00ff;
-      border-radius: 12px 12px 12px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      font-size: 14px;
-      animation: fadeInUp 0.3s ease;
-      backdrop-filter: blur(2px);
-    }
+/* === MESSAGE AREA === */
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.422);
+  padding: 10px;
+  border: 1px solid #7f00ff;
+  color: #000000;
+}
 
-    .typing-indicator {
-      font-style: italic;
-      opacity: 0.7;
-      margin: 4px 0;
-    }
+/* === MESSAGE BUBBLE === */
+.message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px 14px;
+  max-width: 80%;
+  background: linear-gradient(135deg, rgba(0,255,255,0.2), rgba(127,0,255,0.2));
+  border: 1px solid #7f00ff;
+  border-radius: 12px 12px 12px 0;
+  box-shadow: 0 2px 6px rgb(15, 15, 15);
+  font-size: 16px;
+  animation: fadeInUp 0.3s ease;
+  backdrop-filter: blur(2px);
+}
 
-    @media screen and (max-width: 600px) {
-  #chat-box {
+.bubble-timestamp {
+  font-size: 13px;
+  opacity: 0.6;
+  margin: -4px 0 8px 42px;
+  text-align: left;
+}
+
+.typing-indicator {
+  font-style: italic;
+  opacity: 0.7;
+  margin: 4px 0;
+}
+
+/* === INPUT AREA === */
+#input-area {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+}
+
+#message-input {
+  flex: 1;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.553);
+  color: #000000;
+  border: 1px solid #7f00ff;
+  font-size: 14px;
+}
+
+#send-btn {
+  padding: 10px 16px;
+  background-color: #fefefe;
+  color: #00ffff;
+  border: 2px solid #7f00ff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* === GALLERY === */
+#search-input, #image-name {
+  padding: 10px;
+  margin-bottom: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #00ffff;
+  border: 1px solid #7f00ff;
+}
+
+/* Upload area di galeri */
+#upload-area {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  z-index: 10;
+}
+
+#upload-btn {
+  pointer-events: auto; 
+  z-index: 1; 
+}
+
+#image-grid {
+  column-count: 3;
+  column-gap: 18px;
+  padding: 18px 0;
+  width: 100%;
+}
+
+.image-item {
+  display: -webkit-inline-box;
+  width: 100%;
+  margin-bottom: 18px;
+  background: #181818;
+  border: 1px solid #222;
+  box-shadow: 0 2px 12px #0004;
+  padding: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image-item img {
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: contain;
+  display: block;
+  border-radius: 0;
+}
+
+.image-item span {
+  display: block;
+  font-size: 13px;
+  margin: 0;
+  padding: 8px 0 6px 0;
+  text-align: center;
+  color: #e0e0e0;
+  background: #222;
+  font-family: 'Courier New', Courier, monospace;
+  border-top: 1px solid #333;
+}
+
+/* === ANIMASI === */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === RESPONSIVE === */
+@media screen and (max-width: 600px) {
+  #chat-box, #gallery-box {
     width: 95vw;
     height: 80vh;
     padding: 12px;
+  }
+
+  #chat-icon, #gallery-icon {
+    font-size: 14px;
+    padding: 8px 16px;
   }
 
   #profile-area {
@@ -164,9 +411,15 @@
   }
 
   #upload-btn img {
-    width: 28px;
-    height: 28px;
-  }
+  width: 280px;
+  height: 280px;
+  border-radius: 1px;
+  border: none; 
+  background: none; 
+  cursor: pointer;
+}
+
+
 
   .message {
     font-size: 13px;
@@ -182,54 +435,25 @@
   #message-input, #send-btn {
     width: 100%;
   }
-
-  #chat-icon {
-    font-size: 14px;
-    padding: 8px 16px;
-  }
 }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    #input-area {
-      display: flex;
-      gap: 10px;
-    }
-
-    input[type="text"], button {
-      background: rgba(0,0,0,0.6);
-      color: #00ffff;
-      border: 1px solid #7f00ff;
-      padding: 10px;
-    }
-
-    #message-input {
-      flex: 1;
-    }
-
-    #send-btn {
-      cursor: pointer;
-    }
-  </style>
+</style>
+   
 </head>
 <body>
 
-<img id="bg-page" src="Background/pom-2pc.jpeg" alt="Background Halaman">
+  <img id="bg-page" src="Background/pom-2pc.jpeg" alt="Background Halaman">
 
-<div id="chat-icon">💬 CHAT</div>
+  <div class="button-row">
+    <div id="chat-icon">💬 CHAT</div>
+    <div id="gallery-icon">🖼️ GALERI</div>
+  </div>
 
-<div id="chat-box">
+  <!-- CHAT BOX -->
+ <div id="chat-box">
   <img id="bg-chat" src="Background/bg-chat.jpg" alt="Background Chat Box">
 
+  <!-- Baris profil -->
   <div id="profile-area">
     <img id="profile-pic" src="profile/default.png" alt="Profil">
     <input type="text" id="username-input" placeholder="Masukkan username">
@@ -239,37 +463,112 @@
     <input type="file" id="upload-input" accept="image/*">
   </div>
 
+  <!-- Ruang pesan -->
   <div id="messages"></div>
 
+  <!-- Input pesan di bawah -->
   <div id="input-area">
     <input type="text" id="message-input" placeholder="Ketik pesan...">
     <button id="send-btn">📩 Kirim</button>
   </div>
 </div>
+  <!-- GALERI BOX -->
+  <div id="gallery-box">
+    <input type="text" id="search-input" placeholder="Cari nama gambar...">
+    <div id="upload-area">
+      <button id="add-image-btn">
+        <img src="Background/photo_profil.jpg" alt="Icon" style="width:18px;height:18px;margin-right:6px;vertical-align:middle;"> Tambah Image
+      </button>
+      <input type="file" id="image-upload" accept="image/*" style="display:none">
+      <input type="text" id="image-name" placeholder="Nama gambar">
+      <button id="gallery-upload-btn">📤 Upload</button>
+    </div>
+    <div id="image-grid"></div>
+    <!-- Modal Preview ala walkerworld -->
+<!-- Modal Preview ala walkerworld (di luar box galeri, di depan semua elemen) -->
+</div>
+<div id="gallery-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(20,20,20,0.85);z-index:99999;align-items:center;justify-content:center;">
+  <div id="modal-anim" style="background:linear-gradient(135deg,#1a0033 60%,#00ffff22 100%);padding:32px 40px;border-radius:22px;box-shadow:0 0 48px #7f00ffcc,0 0 0 6px #00ffff inset;max-width:520px;width:90vw;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+    <img id="modal-img-preview" src="" alt="Preview" style="max-width:100%;border-radius:16px;box-shadow:0 0 32px #7f00ffcc,0 0 0 6px #00ffff inset;opacity:0;transform:scale(0.7);transition:all 0.35s;display:block;">
+    <div id="modal-img-name" style="color:#00ffff;font-size:1.18em;margin-top:18px;text-align:center;font-weight:bold;font-family:'Courier New',Courier,monospace;text-shadow:0 0 12px #7f00ff;letter-spacing:1px;"></div>
+    <button id="close-gallery-modal" style="margin-top:22px;padding:8px 28px;background:linear-gradient(90deg,#7f00ff 60%,#00ffff 100%);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:bold;box-shadow:0 0 12px #00ffff88,0 0 0 2px #7f00ff inset;font-size:1em;">Tutup</button>
+  </div>
+</div>
+    </div>
+  </div>
 
-<!-- 🔊 Template audio -->
+
+<!-- 🔊 Efek suara -->
 <audio id="send-sound" src="sound click/zapsplat_multimedia_button_click_004_68776.mp3" preload="auto"></audio>
 <audio id="click-sound" src="sound click/zapsplat_multimedia_plastic_button_press_light_fast_113387.mp3" preload="auto"></audio>
+<audio id="gallery-sound" src="sound click/zapsplat_multimedia_button_click_004_68776.mp3" preload="auto"></audio>
 
 <script>
+  // Firebase Configuration & Initialization
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2QwQvQwQvQwQvQwQvQwQvQwQvQwQvQwQ",
+    authDomain: "chatl-alfaros.firebaseapp.com",
+    databaseURL: "https://chatl-alfaros-default-rtdb.firebaseio.com",
+    projectId: "chatl-alfaros",
+    storageBucket: "chatl-alfaros.appspot.com",
+    messagingSenderId: "1234567890",
+    appId: "1:1234567890:web:abcdef123456"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  // Modal preview ala walkerworld
+  const galleryModal = document.getElementById("gallery-modal");
+  const modalImgPreview = document.getElementById("modal-img-preview");
+  const modalImgName = document.getElementById("modal-img-name");
+  const closeGalleryModal = document.getElementById("close-gallery-modal");
+
+  // Tombol & Box
   const chatIcon = document.getElementById("chat-icon");
+  const galleryIcon = document.getElementById("gallery-icon");
   const chatBox = document.getElementById("chat-box");
+  const galleryBox = document.getElementById("gallery-box");
+
+  // Chat
   const sendBtn = document.getElementById("send-btn");
   const messageInput = document.getElementById("message-input");
   const usernameInput = document.getElementById("username-input");
   const messagesDiv = document.getElementById("messages");
   const sendSound = document.getElementById("send-sound");
   const clickSound = document.getElementById("click-sound");
+
+  // Avatar
   const profilePic = document.getElementById("profile-pic");
   const uploadInput = document.getElementById("upload-input");
-
   let profileImageSrc = profilePic.src;
 
+  // Galeri
+  const gallerySound = document.getElementById("gallery-sound");
+  const galleryUploadBtn = document.getElementById("gallery-upload-btn");
+  const imageUpload = document.getElementById("image-upload");
+  const imageNameInput = document.getElementById("image-name");
+  const imageGrid = document.getElementById("image-grid");
+  const searchInput = document.getElementById("search-input");
+  const addImageBtn = document.getElementById("add-image-btn");
+  let images = [];
+  let selectedFile = null;
+
+  // Toggle CHAT
   chatIcon.addEventListener("click", () => {
     chatBox.classList.toggle("active");
+    galleryBox.classList.remove("active");
     clickSound.play();
   });
 
+  // Toggle GALERI
+  galleryIcon.addEventListener("click", () => {
+  galleryBox.classList.toggle("active");
+  chatBox.classList.remove("active");
+  gallerySound.play();
+  galleryIcon.classList.add("clicked");
+  setTimeout(() => galleryIcon.classList.remove("clicked"), 200);
+  });
+
+  // Upload avatar
   uploadInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -282,6 +581,7 @@
     }
   });
 
+  // Typing indicator
   messageInput.addEventListener("input", () => {
     const user = usernameInput.value.trim() || "User";
     showTypingIndicator(`${user} sedang mengetik...`);
@@ -302,44 +602,126 @@
     if (typing) typing.remove();
   }
 
- function sendMessage() {
-  const text = messageInput.value.trim();
-  const user = usernameInput.value.trim();
-  if (text && user) {
-    const div = document.createElement("div");
-    div.className = "message";
+  // Kirim pesan
+  function sendMessage() {
+    const text = messageInput.value.trim();
+    const user = usernameInput.value.trim();
+    if (text && user) {
+      const now = new Date();
+      const tanggal = now.toLocaleDateString("id-ID", {
+        day: "2-digit", month: "short", year: "numeric"
+      });
+      const waktu = now.toLocaleTimeString("id-ID", {
+        hour: "2-digit", minute: "2-digit"
+      });
 
-    const img = document.createElement("img");
-    img.src = profileImageSrc;
-    img.alt = "Profil";
-    img.style.width = "32px";
-    img.style.height = "32px";
-    img.style.borderRadius = "50%";
-    img.style.objectFit = "cover";
-    img.style.border = "1px solid #7f00ff";
+      const div = document.createElement("div");
+      div.className = "message";
 
-    const span = document.createElement("span");
-    span.className = "message-text";
-    span.textContent = `${user}: ${text}`;
+      const img = document.createElement("img");
+      img.src = profileImageSrc;
+      img.alt = "Profil";
+      img.style.width = "32px";
+      img.style.height = "32px";
+      img.style.borderRadius = "50%";
+      img.style.objectFit = "cover";
+      img.style.border = "1px solid #7f00ff";
 
-    div.appendChild(img);
-    div.appendChild(span);
-    messagesDiv.appendChild(div);
-    messageInput.value = "";
-    removeTypingIndicator();
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    sendSound.play();
+      const span = document.createElement("span");
+      span.className = "message-text";
+      span.textContent = `${user}: ${text}`;
+
+      div.appendChild(img);
+      div.appendChild(span);
+      messagesDiv.appendChild(div);
+
+      const timeStamp = document.createElement("div");
+      timeStamp.className = "bubble-timestamp";
+      timeStamp.textContent = `${tanggal} • ${waktu}`;
+      messagesDiv.appendChild(timeStamp);
+
+      messageInput.value = "";
+      removeTypingIndicator();
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      sendSound.play();
+    }
   }
-}
 
   sendBtn.addEventListener("click", sendMessage);
-
   messageInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      sendMessage();
+    if (e.key === "Enter") sendMessage();
+  });
+
+  // Tombol Tambahkan Image membuka file picker
+  addImageBtn.addEventListener("click", () => {
+    clickSound.play();
+    imageUpload.click();
+  });
+
+  // Simpan file yang dipilih
+  imageUpload.addEventListener("change", (e) => {
+    selectedFile = e.target.files[0];
+  });
+
+  // Upload gambar ke galeri
+  galleryUploadBtn.addEventListener("click", () => {
+    clickSound.play();
+    const file = selectedFile;
+    const name = imageNameInput.value.trim();
+    if (file && name) {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const imgData = {
+          name: name.toLowerCase(),
+          src: evt.target.result
+        };
+        images.push(imgData);
+        renderImages(images);
+        imageUpload.value = "";
+        imageNameInput.value = "";
+        selectedFile = null;
+      };
+      reader.readAsDataURL(file);
     }
   });
-</script>
 
+  // Pencarian gambar
+  searchInput.addEventListener("input", () => {
+    const keyword = searchInput.value.trim().toLowerCase();
+    const filtered = images.filter(img => img.name.includes(keyword));
+    renderImages(filtered);
+  });
+
+  // Tampilkan gambar
+  function renderImages(list) {
+    imageGrid.innerHTML = "";
+    list.forEach(img => {
+      const div = document.createElement("div");
+      div.className = "image-item";
+      div.innerHTML = `<img src="${img.src}" alt="${img.name}"><span>${img.name}</span>`;
+      div.addEventListener("click", () => {
+        gallerySound.play();
+        modalImgPreview.src = img.src;
+        modalImgName.textContent = img.name;
+        galleryModal.style.display = "flex";
+        setTimeout(() => {
+          modalImgPreview.style.opacity = "1";
+          modalImgPreview.style.transform = "scale(1)";
+        }, 10);
+      });
+      imageGrid.appendChild(div);
+    });
+  closeGalleryModal.addEventListener("click", () => {
+    clickSound.play();
+    modalImgPreview.style.opacity = "0";
+    modalImgPreview.style.transform = "scale(0.7)";
+    setTimeout(() => {
+      galleryModal.style.display = "none";
+      modalImgPreview.src = "";
+      modalImgName.textContent = "";
+    }, 300);
+  });
+  }
+</script>
 </body>
 </html>
